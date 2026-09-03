@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.mohuddle.overhead",
+  "name": "Overhead",
+  "version": "0.1.0",
+  "author": "mohuddle",
+  "description": "Watch live ADS-B traffic and notify when a plane is within 1, 5, or 10 miles.",
+  "license": "MIT",
+  "tags": ["adsb", "flights", "aviation", "notifications"],
+  "kinds": ["bar-widget"],
+  "entryPoints": { "barWidget": "BarWidget.qml" },
+  "barWidget": {
+    "displayName": "Overhead",
+    "description": "Nearby aircraft from public ADS-B feeds",
+    "category": "Widgets",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

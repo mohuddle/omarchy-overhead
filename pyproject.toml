@@ -1,0 +1,18 @@
+[project]
+name = "omarchy-overhead"
+version = "0.1.0"
+description = "Nearby ADS-B aircraft for Omarchy: TUI and bar plugin with 1/5/10 mile alerts."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+overhead = "overhead.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["overhead*"]
