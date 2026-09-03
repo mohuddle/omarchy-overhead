@@ -8,7 +8,8 @@ Plugin id: `io.github.mohuddle.overhead`
 
 ## What it does
 
-- Asks before using location (desktop portal or GeoClue). You can also type coordinates or a place name. IP geolocation is not used — it is too coarse for 1-mile alerts.
+- You type a **ZIP, city, or coordinates**. That is the whole location story for a normal install. Nothing on the machine reports where you are.
+- **Device location is optional.** GeoClue is not a dependency. Install it later only if you want the Device button.
 - Pulls live aircraft from public ADS-B feeds in the same JSON family as [globe.adsbexchange.com](https://globe.adsbexchange.com/) (`adsb.fi`, then `adsb.lol`, then OpenSky).
 - Lists nearby flights in the TUI and the bar popup.
 - Notifies once per aircraft per ring (1 / 5 / 10 miles) until that plane leaves.
@@ -31,7 +32,7 @@ Place the widget:
 omarchy bar move io.github.mohuddle.overhead --section right
 ```
 
-No extra Python packages. Python 3.10+ and an Omarchy desktop are enough.
+No extra Python packages. No GeoClue. Python 3.10+ and an Omarchy desktop are enough.
 
 ## TUI
 
@@ -41,8 +42,8 @@ overhead tui
 
 | Key | Action |
 | --- | --- |
-| `a` | allow location (desktop portal / GeoClue) |
-| `m` | type coordinates (`34.05, -118.24`) or a place name |
+| `m` | ZIP, city, or coordinates |
+| `a` | device location (only if GeoClue is installed) |
 | `space` | start / stop watching |
 | `1` / `5` / `0` | toggle 1 / 5 / 10 mile rings |
 | `n` | notifications on / off |
@@ -50,11 +51,11 @@ overhead tui
 | `c` | clear stored location |
 | `q` | quit |
 
-The first run stays idle until you allow location or set one manually.
+The first run stays idle until you set a ZIP, city, or coordinates.
 
 ## Plugin
 
-Left click the plane: popup with nearby traffic, ring toggles, Watch / Notify / TUI. Right click toggles watching without opening the panel. The icon uses the theme accent while something is inside 1 mile.
+Left click the plane: ZIP/city field, nearby traffic, ring toggles, Watch / Notify / TUI. The Device button appears only when GeoClue is already on the machine. Right click toggles watching. The icon uses the theme accent while something is inside 1 mile.
 
 Clicking a notification opens the panel.
 
@@ -64,9 +65,10 @@ Clicking a notification opens the panel.
 overhead start
 overhead stop
 overhead status
-overhead locate
-overhead location 34.05 -118.24
+overhead location 72714
 overhead location "Santa Monica, CA"
+overhead location 34.05 -118.24
+overhead locate              # optional; needs GeoClue
 overhead location --clear
 overhead rings 1,5,10
 overhead notify on
@@ -81,13 +83,16 @@ overhead notify on
 
 Grounded aircraft, and anything below 500 ft, are ignored for toasts so a nearby airport does not spam you. The list still shows them. Distances are statute miles. At most one notification is sent per poll, and not more often than every 8 seconds.
 
-**Allow** needs [GeoClue](https://gitlab.freedesktop.org/geoclue/geoclue). Omarchy does not ship it, and the Hyprland portal does not implement Location, so the button fails until you install the backend:
+## Optional device location
+
+Skip this unless you want the machine to resolve your position. The app works fully with a ZIP or city.
 
 ```bash
 omarchy pkg add geoclue
+sudo cp scripts/geoclue-omarchy-overhead.conf /etc/geoclue/conf.d/
 ```
 
-Then press **Allow** again. If GeoClue still cannot fix a position, type coordinates or a place name. Manual entry does not need GeoClue.
+Hyprland has no Location portal. GeoClue is the only auto-locate backend, and it is never pulled in by `setup.sh`.
 
 ## Remove
 

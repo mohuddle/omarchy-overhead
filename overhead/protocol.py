@@ -26,6 +26,7 @@ def empty_status() -> dict[str, Any]:
         "ready": True,
         "watching": False,
         "consent": "none",
+        "can_locate": False,
         "location": None,
         "rings": list(RINGS),
         "notify": True,

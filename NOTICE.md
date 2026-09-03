@@ -23,8 +23,10 @@ It is recolored to the active Omarchy theme.
 
 ## Location
 
-Device location is requested only after you press **Allow**, via the desktop
-portal or GeoClue. There is no IP geolocation fallback. Manual coordinates
-and place names (OpenStreetMap Nominatim) never require that permission.
-Coordinates are stored under `~/.local/state/omarchy/overhead/` and are sent
-only as a lat/lon radius query to the ADS-B APIs above.
+The default path is a ZIP, city, or coordinates you type. That query goes to
+OpenStreetMap Nominatim only because you pressed Set. GeoClue is not a
+dependency and is never installed by this project. Device location runs only
+if you install GeoClue yourself and then press Device / `a`. There is no IP
+geolocation. Stored coordinates live under
+`~/.local/state/omarchy/overhead/` and are sent only as a lat/lon radius
+query to the ADS-B APIs above.

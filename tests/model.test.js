@@ -9,10 +9,12 @@ assert.equal(empty.ok, true)
 assert.equal(empty.watching, false)
 assert.deepEqual(empty.rings, [1, 5, 10])
 assert.equal(empty.notify, true)
+assert.equal(model.needsLocation(empty), true)
 assert.equal(model.needsConsent(empty), true)
+assert.equal(model.canLocate(empty), false)
 assert.equal(model.hasLocation(empty), false)
 assert.equal(model.locationLabel(empty), "No location")
-assert.match(model.statusText(empty), /location needed/)
+assert.match(model.statusText(empty), /ZIP or city/)
 
 const live = model.parseStatus(JSON.stringify({
   ready: true,

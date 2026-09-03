@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import urllib.parse
 import urllib.request
-from typing import Any, Callable
+from typing import Any
 
 from .geo import parse_location_text, valid_coords
+
+US_ZIP_RE = re.compile(r"^\d{5}(?:-\d{4})?$")
 
 USER_AGENT = "omarchy-overhead/0.1 (personal ADS-B watcher; https://github.com/mohuddle/omarchy-overhead)"
 HTTP_TIMEOUT = 10
@@ -31,19 +34,39 @@ def _http_json(url: str, timeout: int = HTTP_TIMEOUT) -> Any:
         return json.loads(resp.read().decode("utf-8"))
 
 
+def device_locate_available() -> bool:
+    """True only if GeoClue is installed and activatable. No locate is started."""
+    try:
+        import dbus
+
+        bus = dbus.SystemBus()
+        names = dbus.Interface(
+            bus.get_object("org.freedesktop.DBus", "/org/freedesktop/DBus"),
+            "org.freedesktop.DBus",
+        ).ListActivatableNames()
+        return "org.freedesktop.GeoClue2" in names
+    except Exception:
+        return False
+
+
 def geocode_place(query: str) -> dict[str, Any]:
     query = str(query or "").strip()
     if not query or query.startswith("-"):
-        raise LocationError("enter coordinates or a place name")
+        raise LocationError("enter a ZIP, city, or coordinates")
     parsed = parse_location_text(query)
     if parsed:
         lat, lon = parsed
         return {"lat": lat, "lon": lon, "source": "manual", "label": f"{lat:.4f}, {lon:.4f}", "accuracy_m": None}
-    q = urllib.parse.urlencode({"format": "jsonv2", "limit": "1", "q": query.strip()})
+    if US_ZIP_RE.match(query):
+        q = urllib.parse.urlencode(
+            {"format": "jsonv2", "limit": "1", "postalcode": query[:5], "country": "us"}
+        )
+    else:
+        q = urllib.parse.urlencode({"format": "jsonv2", "limit": "1", "q": query})
     url = f"https://nominatim.openstreetmap.org/search?{q}"
     rows = _http_json(url)
     if not isinstance(rows, list) or not rows:
-        raise LocationError(f"no match for {query!r}")
+        raise LocationError(f"no match for {query!r}. Try a ZIP, city, or lat, lon.")
     row = rows[0]
     lat, lon = float(row["lat"]), float(row["lon"])
     if not valid_coords(lat, lon):
@@ -209,18 +232,13 @@ def locate_portal(timeout: int = 8) -> dict[str, Any]:
 
 
 def locate_auto() -> dict[str, Any]:
-    errors: list[str] = []
-    steps: list[tuple[str, Callable[[], dict[str, Any]]]] = [
-        ("portal", locate_portal),
-        ("geoclue", locate_geoclue),
-    ]
-    for name, fn in steps:
-        try:
-            return fn()
-        except Exception as exc:
-            errors.append(f"{name}: {exc}")
-    raise LocationError(
-        "Device location needs GeoClue ("
-        + "; ".join(errors)
-        + "). Install it with: omarchy pkg add geoclue — or type coordinates / a place name."
-    )
+    if not device_locate_available():
+        raise LocationError(
+            "Enter a ZIP or city. Device location is optional (omarchy pkg add geoclue)."
+        )
+    try:
+        return locate_geoclue()
+    except LocationError:
+        raise
+    except Exception as exc:
+        raise LocationError(_explain(exc)) from exc

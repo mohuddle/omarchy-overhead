@@ -25,7 +25,7 @@ install_plugin() {
   echo "installing bar plugin into $PLUGIN_DIR"
   mkdir -p "$PLUGIN_DIR"
   cp -r "$ROOT/plugin/." "$PLUGIN_DIR/"
-  touch "$PLUGIN_DIR" "$PLUGIN_DIR/BarWidget.qml" "$PLUGIN_DIR/PlaneIcon.qml"
+  touch "$PLUGIN_DIR" "$PLUGIN_DIR/BarWidget.qml" "$PLUGIN_DIR/PlaneIcon.qml" "$PLUGIN_DIR/Panel.qml" "$PLUGIN_DIR/Service.qml"
 }
 
 install_plugin
@@ -37,14 +37,11 @@ if command -v omarchy >/dev/null; then
   echo "bar widget: omarchy bar move $PLUGIN_ID --section right"
 fi
 
-if ! pacman -Q geoclue >/dev/null 2>&1; then
-  echo
-  echo "Allow location needs GeoClue (Omarchy does not ship it):"
-  echo "  omarchy pkg add geoclue"
-  echo "  sudo cp $ROOT/scripts/geoclue-omarchy-overhead.conf /etc/geoclue/conf.d/"
-fi
-
 echo
-echo "ready. open the TUI:"
+echo "ready. GeoClue is not installed and is not required."
 echo "  overhead tui"
-echo "press a to allow location (needs GeoClue), or m to type coordinates / a place name."
+echo "then m and a ZIP or city (72714, Santa Monica, 34.05 -118.24)."
+echo
+echo "optional — device location later:"
+echo "  omarchy pkg add geoclue"
+echo "  sudo cp $ROOT/scripts/geoclue-omarchy-overhead.conf /etc/geoclue/conf.d/"

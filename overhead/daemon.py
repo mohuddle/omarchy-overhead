@@ -37,6 +37,7 @@ class OverheadDaemon:
             {
                 "ready": True,
                 "consent": str(data.get("consent") or "none"),
+                "can_locate": location.device_locate_available(),
                 "location": loc,
                 "rings": config.normalize_rings(data.get("rings")),
                 "notify": bool(data.get("notify")),
@@ -45,10 +46,7 @@ class OverheadDaemon:
             }
         )
         if loc is None and not self.status.get("error"):
-            if self.status["consent"] == "none":
-                self.status["error"] = "location permission needed"
-            else:
-                self.status["error"] = "set a location to watch the sky"
+            self.status["error"] = "enter a ZIP, city, or coordinates"
 
     def persist(self) -> None:
         loc = self.status.get("location") or {}
@@ -205,19 +203,25 @@ class OverheadDaemon:
         return self.start_watch()
 
     def locate(self) -> dict[str, Any]:
-        self.set_status(consent="granted", error="requesting location…")
-        self.persist()
+        can = location.device_locate_available()
+        self.set_status(can_locate=can)
+        if not can:
+            self.set_status(
+                error="Enter a ZIP, city, or coordinates. Device location is optional (omarchy pkg add geoclue)."
+            )
+            return self.snapshot()
+        self.set_status(error="requesting device location…")
         try:
             loc = location.locate_auto()
         except location.LocationError as exc:
-            self.set_status(error=str(exc))
+            self.set_status(error=str(exc), can_locate=can)
             return self.snapshot()
         return self.set_location(loc, "granted")
 
     def apply_query(self, text: str) -> dict[str, Any]:
         query = str(text or "").strip()
         if not query:
-            self.set_status(error="enter coordinates or a place name")
+            self.set_status(error="enter a ZIP, city, or coordinates")
             return self.snapshot()
         try:
             loc = location.geocode_place(query)
@@ -250,6 +254,7 @@ class OverheadDaemon:
             conn.sendall(encode({"event": "status", **self.snapshot()}))
             return
         if op == "status":
+            self.set_status(can_locate=location.device_locate_available())
             conn.sendall(encode({"ok": True, **self.snapshot()}))
             return
         if op == "start":

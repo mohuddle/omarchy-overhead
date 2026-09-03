@@ -134,8 +134,11 @@ def _loop(stdscr: curses.window, state: TuiState) -> None:
         elif key in (ord(" "),):
             _kick(state, "stop" if status.get("watching") else "start")
         elif key in (ord("a"), ord("A")):
-            state.note("requesting location…")
-            _kick(state, "locate")
+            if status.get("can_locate"):
+                state.note("requesting device location…")
+                _kick(state, "locate")
+            else:
+                state.note("Enter a ZIP or city with m. Device location is optional (omarchy pkg add geoclue).")
         elif key in (ord("m"), ord("M")):
             state.set_mode("prompt", "")
             curses.curs_set(1)
@@ -246,16 +249,18 @@ def _draw(
         cols,
         curses.color_pair(3),
     )
-    help_line = "space watch   a allow location   m set location   1/5/0 rings   n notify   r refresh   q quit"
+    help_line = "space watch   m ZIP/city   1/5/0 rings   n notify   r refresh   q quit"
+    if status.get("can_locate"):
+        help_line = "space watch   m ZIP/city   a device location   1/5/0 rings   n notify   r refresh   q quit"
     _put(stdscr, 2, help_line, cols, curses.color_pair(3))
     if mode == "prompt":
-        _put(stdscr, 3, "location: " + prompt, cols, curses.color_pair(1) | curses.A_BOLD)
+        _put(stdscr, 3, "ZIP, city, or coordinates: " + prompt, cols, curses.color_pair(1) | curses.A_BOLD)
     elif error:
         _put(stdscr, 3, error, cols, curses.color_pair(1))
     elif note:
         _put(stdscr, 3, note, cols)
     elif _needs_consent(status):
-        _put(stdscr, 3, "Allow location (a) or type coordinates / a place (m). Stored locally.", cols, curses.color_pair(1))
+        _put(stdscr, 3, "Type a ZIP or city (m). Device location is optional and not required.", cols, curses.color_pair(1))
 
     aircraft = list(status.get("aircraft") or [])
     body_top = 5

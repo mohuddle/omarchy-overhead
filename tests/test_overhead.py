@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from overhead.ads import normalize_exchange, normalize_opensky
-from overhead.location import LocationError, geocode_place
+from overhead.location import LocationError, US_ZIP_RE, device_locate_available, geocode_place
 from overhead.alerts import alertable, body_for, coalesce, new_alerts, title_for, urgency_for
 from overhead.notify import PLUGIN_ID, notification_argv
 from overhead.geo import (
@@ -36,6 +36,10 @@ class GeoTests(unittest.TestCase):
         self.assertFalse(valid_coords(0.0, 0.0))
         with self.assertRaises(LocationError):
             geocode_place("--help")
+        self.assertTrue(US_ZIP_RE.match("72714"))
+        self.assertTrue(US_ZIP_RE.match("72714-1234"))
+        self.assertFalse(US_ZIP_RE.match("Santa Monica"))
+        self.assertIsInstance(device_locate_available(), bool)
 
     def test_rings(self) -> None:
         self.assertEqual(rings_inside(0.4, [1, 5, 10]), [1, 5, 10])

@@ -18,7 +18,8 @@ function parseStatus(raw) {
     counts: { "1": 0, "5": 0, "10": 0 },
     error: "",
     last_alert: "",
-    lastError: ""
+    lastError: "",
+    can_locate: false
   }
   try {
     var data = JSON.parse(String(raw || "").trim() || "{}")
@@ -42,7 +43,8 @@ function parseStatus(raw) {
     counts: normalizeCounts(data.counts),
     error: String(data.error || ""),
     last_alert: String(data.last_alert || ""),
-    lastError: String(data.error || "")
+    lastError: String(data.error || ""),
+    can_locate: data.can_locate === true
   }
 }
 
@@ -72,8 +74,16 @@ function hasLocation(status) {
   return !!(status && status.location && status.location.lat !== undefined && status.location.lon !== undefined)
 }
 
+function needsLocation(status) {
+  return !hasLocation(status)
+}
+
 function needsConsent(status) {
-  return !hasLocation(status) && (!status || status.consent === "none" || status.consent === "")
+  return needsLocation(status)
+}
+
+function canLocate(status) {
+  return !!(status && status.can_locate)
 }
 
 function formatMiles(miles) {
@@ -111,7 +121,7 @@ function nearestLine(status) {
 function statusText(status) {
   if (!status) return "Overhead"
   if (status.error) return String(status.error)
-  if (!hasLocation(status)) return "Overhead · location needed"
+  if (!hasLocation(status)) return "Overhead · enter a ZIP or city"
   if (!status.watching) return "Overhead"
   var nearest = nearestLine(status)
   return nearest.indexOf("No aircraft") === 0 ? "Overhead · watching" : nearest
@@ -119,7 +129,7 @@ function statusText(status) {
 
 function tooltipText(status) {
   if (!status) return "Overhead"
-  if (!hasLocation(status)) return "Overhead · set location"
+  if (!hasLocation(status)) return "Overhead · enter a ZIP or city"
   if (!status.watching) return "Overhead · idle"
   return nearestLine(status)
 }
@@ -151,7 +161,9 @@ if (typeof module !== "undefined") {
     normalizeRings: normalizeRings,
     normalizeCounts: normalizeCounts,
     hasLocation: hasLocation,
+    needsLocation: needsLocation,
     needsConsent: needsConsent,
+    canLocate: canLocate,
     formatMiles: formatMiles,
     formatAlt: formatAlt,
     locationLabel: locationLabel,

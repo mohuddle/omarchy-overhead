@@ -115,9 +115,9 @@ Panel {
 
           Text {
             width: parent.width
-            visible: service && service.needsConsent
+            visible: service && service.needsLocation
             textFormat: Text.PlainText
-            text: "Allow location to watch the sky, or enter coordinates / a place name. Location stays on this machine; public ADS-B feeds only see a lat/lon radius query."
+            text: "Enter a ZIP, city, or coordinates. Stored only on this machine. ADS-B feeds see a lat/lon radius, nothing else. Device location is optional and is not installed with the app."
             color: root.muted
             font.family: root.fontFamily
             font.pixelSize: Style.font.caption
@@ -127,17 +127,11 @@ Panel {
           Row {
             width: parent.width
             spacing: Style.space(8)
-            Button {
-              text: "Allow"
-              bordered: true
-              foreground: root.foreground
-              onClicked: if (service) service.locate()
-            }
             TextField {
               id: locationField
-              width: Math.max(Style.space(180), parent.width - Style.space(200))
+              width: Math.max(Style.space(200), parent.width - Style.space(service && service.canLocate ? 220 : 80))
               foreground: root.foreground
-              placeholderText: "34.05, -118.24 or a city"
+              placeholderText: "72714, Santa Monica, or 34.05, -118.24"
               text: root.locationDraft
               onTextChanged: root.locationDraft = text
             }
@@ -146,6 +140,14 @@ Panel {
               bordered: true
               foreground: root.foreground
               onClicked: if (service && root.locationDraft) service.setLocation(root.locationDraft)
+            }
+            Button {
+              visible: service && service.canLocate
+              text: "Device"
+              bordered: true
+              foreground: root.foreground
+              tooltipText: "Optional. Uses GeoClue on this machine."
+              onClicked: if (service) service.locate()
             }
           }
 

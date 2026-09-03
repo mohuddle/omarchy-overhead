@@ -27,8 +27,10 @@ Item {
   property string statusText: "Overhead"
   property string tooltipText: "Overhead"
   property var pending: null
+  property bool canLocate: false
   readonly property bool hasLocation: Model.hasLocation({ location: root.location })
-  readonly property bool needsConsent: Model.needsConsent({ location: root.location, consent: root.consent })
+  readonly property bool needsLocation: Model.needsLocation({ location: root.location })
+  readonly property bool needsConsent: root.needsLocation
   readonly property string locationLabel: Model.locationLabel({ location: root.location })
   readonly property string nearestLine: Model.nearestLine({ nearest: root.nearest, location: root.location })
 
@@ -51,6 +53,7 @@ Item {
     error = parsed.error
     lastAlert = parsed.last_alert
     lastError = parsed.error
+    canLocate = parsed.can_locate === true
     statusText = Model.statusText(parsed)
     tooltipText = Model.tooltipText(parsed)
   }
