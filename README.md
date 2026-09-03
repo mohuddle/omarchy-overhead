@@ -2,7 +2,7 @@
 
 A small TUI and an Omarchy Quattro bar plugin that watches live ADS-B traffic around you and pops a desktop message when a plane comes within **1**, **5**, or **10** miles.
 
-![Plugin preview](preview.svg)
+![Plugin preview](preview.png)
 
 Plugin id: `io.github.mohuddle.overhead`
 
@@ -19,14 +19,16 @@ Location is stored only under `~/.local/state/omarchy/overhead/`. The ADS-B quer
 ## Install
 
 ```bash
-git clone https://github.com/mohuddle/omarchy-overhead.git
-cd omarchy-overhead
-./scripts/setup.sh
+omarchy plugin add https://github.com/mohuddle/omarchy-overhead.git --enable
 ```
 
-That links `overhead` on `~/.local/bin` and copies the bar widget into `~/.config/omarchy/plugins/`.
+That clones the widget and the TUI into `~/.config/omarchy/plugins/`. Put `overhead` on your PATH if you want the CLI outside the bar:
 
-Place the widget:
+```bash
+~/.config/omarchy/plugins/io.github.mohuddle.overhead/scripts/setup.sh
+```
+
+Move the widget:
 
 ```bash
 omarchy bar move io.github.mohuddle.overhead --section right
@@ -105,7 +107,7 @@ rm -rf ~/.local/state/omarchy/overhead
 ## Development checks
 
 ```bash
-omarchy plugin validate plugin
+omarchy plugin validate .
 node tests/model.test.js
 python3 tests/test_overhead.py
 ```

@@ -7,8 +7,8 @@ PLUGIN_ID="io.github.mohuddle.overhead"
 PLUGIN_DIR="${HOME}/.config/omarchy/plugins/${PLUGIN_ID}"
 
 mkdir -p "$BIN_DIR"
-ln -sfn "$ROOT/bin/overhead" "$BIN_DIR/overhead"
 chmod +x "$ROOT/bin/overhead"
+ln -sfn "$ROOT/bin/overhead" "$BIN_DIR/overhead"
 
 install_plugin() {
   mkdir -p "$(dirname "$PLUGIN_DIR")"
@@ -23,9 +23,14 @@ install_plugin() {
     fi
   fi
   echo "installing bar plugin into $PLUGIN_DIR"
-  mkdir -p "$PLUGIN_DIR"
-  cp -r "$ROOT/plugin/." "$PLUGIN_DIR/"
-  touch "$PLUGIN_DIR" "$PLUGIN_DIR/BarWidget.qml" "$PLUGIN_DIR/PlaneIcon.qml" "$PLUGIN_DIR/Panel.qml" "$PLUGIN_DIR/Service.qml"
+  mkdir -p "$PLUGIN_DIR/bin" "$PLUGIN_DIR/overhead"
+  cp -r "$ROOT"/manifest.json "$ROOT"/BarWidget.qml "$ROOT"/Panel.qml "$ROOT"/Service.qml \
+    "$ROOT"/Model.js "$ROOT"/PlaneIcon.qml "$ROOT"/icon.svg "$ROOT"/preview.png "$PLUGIN_DIR/"
+  cp "$ROOT/bin/overhead" "$PLUGIN_DIR/bin/"
+  chmod +x "$PLUGIN_DIR/bin/overhead"
+  cp -r "$ROOT/overhead/." "$PLUGIN_DIR/overhead/"
+  find "$PLUGIN_DIR" -type d -name '__pycache__' -prune -exec rm -rf {} +
+  touch "$PLUGIN_DIR" "$PLUGIN_DIR/BarWidget.qml" "$PLUGIN_DIR/Service.qml"
 }
 
 install_plugin

@@ -155,6 +155,16 @@ function countIn(status, ring) {
   return Number(status.counts[String(ring)] || 0)
 }
 
+function fileUrlToPath(url) {
+  var s = String(url || "")
+  if (s.indexOf("file://") === 0) {
+    s = s.substring(7)
+    if (s.charAt(0) !== "/") s = "/" + s
+    try { s = decodeURIComponent(s) } catch (e) {}
+  }
+  return s
+}
+
 if (typeof module !== "undefined") {
   module.exports = {
     parseStatus: parseStatus,
@@ -172,6 +182,7 @@ if (typeof module !== "undefined") {
     tooltipText: tooltipText,
     ringActive: ringActive,
     aircraftLine: aircraftLine,
-    countIn: countIn
+    countIn: countIn,
+    fileUrlToPath: fileUrlToPath
   }
 }

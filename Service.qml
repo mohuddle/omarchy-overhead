@@ -9,7 +9,8 @@ Item {
   property var settings: ({})
   readonly property string home: Quickshell.env("HOME")
   readonly property string statusFile: home + "/.local/state/omarchy/overhead/status.json"
-  readonly property string bin: home + "/.local/bin/overhead"
+  readonly property string pluginDir: Model.fileUrlToPath(Qt.resolvedUrl("./"))
+  readonly property string bin: pluginDir + "bin/overhead"
 
   property bool ready: false
   property bool watching: false

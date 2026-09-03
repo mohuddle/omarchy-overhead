@@ -1,5 +1,5 @@
 const assert = require("node:assert/strict")
-const model = require("../plugin/Model.js")
+const model = require("../Model.js")
 
 assert.equal(model.parseStatus("not-json").ok, false)
 assert.match(model.parseStatus("not-json").lastError, /parse/)

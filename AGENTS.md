@@ -5,8 +5,8 @@ Public feeder APIs (adsb.fi, adsb.lol, OpenSky), not a scrape of globe.adsbexcha
 
 ## Layout
 
-- `overhead/` — Python package: location consent, ADS-B fetch, Unix-socket daemon, CLI, curses TUI
-- `plugin/` — Omarchy bar widget `io.github.mohuddle.overhead` (Quickshell QML)
+- Root QML + `manifest.json` — Omarchy bar widget `io.github.mohuddle.overhead` (marketplace clone-from-root)
+- `overhead/` — Python package: location, ADS-B fetch, Unix-socket daemon, CLI, curses TUI
 - `bin/overhead` — wrapper onto the package
 - `scripts/setup.sh` — `~/.local/bin` link and plugin install
 

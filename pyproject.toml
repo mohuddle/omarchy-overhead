@@ -1,6 +1,6 @@
 [project]
 name = "omarchy-overhead"
-version = "0.1.0"
+version = "0.2.0"
 description = "Nearby ADS-B aircraft for Omarchy: TUI and bar plugin with 1/5/10 mile alerts."
 readme = "README.md"
 license = { text = "MIT" }
