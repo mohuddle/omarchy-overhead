@@ -16,6 +16,15 @@ class LocationError(RuntimeError):
     pass
 
 
+def _explain(exc: BaseException) -> str:
+    text = str(exc)
+    if "ServiceUnknown" in text or "not activatable" in text.lower():
+        return "GeoClue is not installed (omarchy pkg add geoclue)"
+    if "Location services disabled" in text or "NotAllowed" in text:
+        return "Hyprland has no location portal; GeoClue is the backend"
+    return text
+
+
 def _http_json(url: str, timeout: int = HTTP_TIMEOUT) -> Any:
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -70,7 +79,7 @@ def locate_geoclue(timeout: int = 6) -> dict[str, Any]:
         props.Set("org.freedesktop.GeoClue2.Client", "DesktopId", "omarchy-overhead")
         props.Set("org.freedesktop.GeoClue2.Client", "RequestedAccuracyLevel", dbus.UInt32(4))
     except Exception as exc:
-        raise LocationError(f"GeoClue is not available ({exc})") from exc
+        raise LocationError(_explain(exc)) from exc
 
     result: dict[str, Any] = {}
     loop = GLib.MainLoop()
@@ -185,7 +194,7 @@ def locate_portal(timeout: int = 8) -> dict[str, Any]:
         )
         request.connect_to_signal("Response", on_create)
     except Exception as exc:
-        raise LocationError(f"desktop location portal failed ({exc})") from exc
+        raise LocationError(_explain(exc)) from exc
     GLib.timeout_add_seconds(timeout, on_timeout)
     loop.run()
     if "lat" not in result:
@@ -211,7 +220,7 @@ def locate_auto() -> dict[str, Any]:
         except Exception as exc:
             errors.append(f"{name}: {exc}")
     raise LocationError(
-        "Device location is not available ("
+        "Device location needs GeoClue ("
         + "; ".join(errors)
-        + "). Type coordinates or a place name instead."
+        + "). Install it with: omarchy pkg add geoclue — or type coordinates / a place name."
     )

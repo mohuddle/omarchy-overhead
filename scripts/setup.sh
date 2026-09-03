@@ -37,7 +37,14 @@ if command -v omarchy >/dev/null; then
   echo "bar widget: omarchy bar move $PLUGIN_ID --section right"
 fi
 
+if ! pacman -Q geoclue >/dev/null 2>&1; then
+  echo
+  echo "Allow location needs GeoClue (Omarchy does not ship it):"
+  echo "  omarchy pkg add geoclue"
+  echo "  sudo cp $ROOT/scripts/geoclue-omarchy-overhead.conf /etc/geoclue/conf.d/"
+fi
+
 echo
 echo "ready. open the TUI:"
 echo "  overhead tui"
-echo "press a to allow location, or m to type coordinates / a place name."
+echo "press a to allow location (needs GeoClue), or m to type coordinates / a place name."

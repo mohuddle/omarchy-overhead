@@ -81,7 +81,13 @@ overhead notify on
 
 Grounded aircraft, and anything below 500 ft, are ignored for toasts so a nearby airport does not spam you. The list still shows them. Distances are statute miles. At most one notification is sent per poll, and not more often than every 8 seconds.
 
-For device location, install GeoClue (`omarchy pkg add geoclue`) and press **Allow**. If that is unavailable, type coordinates or a place name.
+**Allow** needs [GeoClue](https://gitlab.freedesktop.org/geoclue/geoclue). Omarchy does not ship it, and the Hyprland portal does not implement Location, so the button fails until you install the backend:
+
+```bash
+omarchy pkg add geoclue
+```
+
+Then press **Allow** again. If GeoClue still cannot fix a position, type coordinates or a place name. Manual entry does not need GeoClue.
 
 ## Remove
 
