@@ -2,7 +2,9 @@
 
 A small TUI and an Omarchy Quattro bar plugin that watches live ADS-B traffic around you and pops a desktop message when a plane comes within **1**, **5**, or **10** miles.
 
-![Plugin preview](preview.png)
+![Bar panel](preview.png)
+
+![Notification](notification.png)
 
 Plugin id: `io.github.mohuddle.overhead`
 
