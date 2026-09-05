@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-import json
 import os
 import re
 import urllib.parse
-import urllib.request
 from typing import Any
 
 from .geo import parse_location_text, valid_coords
+from .httpjson import read_json
 
 US_ZIP_RE = re.compile(r"^\d{5}(?:-\d{4})?$")
 
-USER_AGENT = "omarchy-overhead/0.1 (personal ADS-B watcher; https://github.com/mohuddle/omarchy-overhead)"
+USER_AGENT = "omarchy-overhead/0.2.1 (personal ADS-B watcher; https://github.com/mohuddle/omarchy-overhead)"
 HTTP_TIMEOUT = 10
 
 
@@ -29,9 +28,7 @@ def _explain(exc: BaseException) -> str:
 
 
 def _http_json(url: str, timeout: int = HTTP_TIMEOUT) -> Any:
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    return read_json(url, timeout=timeout, user_agent=USER_AGENT)
 
 
 def device_locate_available() -> bool:

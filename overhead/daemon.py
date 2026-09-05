@@ -12,8 +12,25 @@ from typing import Any
 
 from . import ads, alerts, config, location, notify
 from .geo import format_coords, format_miles, valid_coords
-from .paths import pid_path, socket_path, status_path
-from .protocol import FETCH_DEDUP_SECONDS, MIN_ALERT_ALT_FT, NOTIFY_MIN_INTERVAL, RINGS, encode, empty_status
+from .paths import (
+    PathError,
+    bind_private_unix_socket,
+    peer_is_self,
+    pid_path,
+    socket_path,
+    status_path,
+    unlink_socket,
+)
+from .protocol import (
+    FETCH_DEDUP_SECONDS,
+    MIN_ALERT_ALT_FT,
+    NOTIFY_MIN_INTERVAL,
+    RINGS,
+    ProtocolError,
+    append_ipc,
+    encode,
+    empty_status,
+)
 
 
 class OverheadDaemon:
@@ -312,11 +329,13 @@ class OverheadDaemon:
         subscribed = False
         buf = b""
         try:
+            if not peer_is_self(conn):
+                return
             while True:
                 chunk = conn.recv(4096)
                 if not chunk:
                     break
-                buf += chunk
+                buf = append_ipc(buf, chunk)
                 while b"\n" in buf:
                     raw, buf = buf.split(b"\n", 1)
                     if not raw.strip():
@@ -327,7 +346,7 @@ class OverheadDaemon:
                     self.handle(message, conn)
                     if not subscribed:
                         return
-        except (OSError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError, ProtocolError, UnicodeDecodeError):
             pass
         finally:
             with self.lock:
@@ -352,20 +371,15 @@ class OverheadDaemon:
                 self.sock.close()
             except OSError:
                 pass
-        sock_file = socket_path()
-        if sock_file.exists():
-            try:
-                sock_file.unlink()
-            except OSError:
-                pass
+        try:
+            unlink_socket(socket_path())
+        except (OSError, PathError):
+            pass
         os._exit(0)
 
     def serve(self) -> None:
         sock_file = socket_path()
-        if sock_file.exists():
-            sock_file.unlink()
-        server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        server.bind(str(sock_file))
+        server = bind_private_unix_socket(sock_file)
         server.listen(16)
         server.setblocking(False)
         self.sock = server
@@ -386,6 +400,12 @@ class OverheadDaemon:
             try:
                 conn, _ = server.accept()
             except OSError:
+                continue
+            if not peer_is_self(conn):
+                try:
+                    conn.close()
+                except OSError:
+                    pass
                 continue
             threading.Thread(target=self.serve_client, args=(conn,), daemon=True).start()
 

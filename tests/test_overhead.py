@@ -1,17 +1,28 @@
 from __future__ import annotations
 
+import json
 import math
+import os
+import socket
+import stat
+import subprocess
 import sys
+import tempfile
+import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from overhead.ads import normalize_exchange, normalize_opensky
+from overhead.httpjson import MAX_HTTP_BYTES, HttpError, read_json
 from overhead.location import LocationError, US_ZIP_RE, device_locate_available, geocode_place
 from overhead.alerts import alertable, body_for, coalesce, new_alerts, title_for, urgency_for
 from overhead.notify import PLUGIN_ID, notification_argv
+from overhead.paths import PathError, ensure_private_dir, runtime_dir
+from overhead.protocol import MAX_IPC_FRAME, ProtocolError, append_ipc
 from overhead.geo import (
     format_miles,
     haversine_miles,
@@ -140,6 +151,166 @@ class NotifyTests(unittest.TestCase):
         self.assertLess(title_at, body_at)
         self.assertLess(body_at, exec_at)
         self.assertEqual(argv[exec_at + 1 : exec_at + 5], ["omarchy-shell", "shell", "summon", PLUGIN_ID])
+
+
+class PathSecurityTests(unittest.TestCase):
+    def test_creates_private_runtime_dir(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp) / "run"
+            base.mkdir()
+            os.chmod(base, 0o700)
+            with patch.dict(os.environ, {"XDG_RUNTIME_DIR": str(base)}):
+                dest = runtime_dir()
+            self.assertEqual(dest, base / "omarchy-overhead")
+            st = os.lstat(dest)
+            self.assertTrue(stat.S_ISDIR(st.st_mode))
+            self.assertFalse(stat.S_ISLNK(st.st_mode))
+            self.assertEqual(st.st_uid, os.getuid())
+            self.assertEqual(stat.S_IMODE(st.st_mode), 0o700)
+
+    def test_rejects_symlink_runtime_dir(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            real = Path(tmp) / "real"
+            real.mkdir()
+            os.chmod(real, 0o700)
+            link = Path(tmp) / "link"
+            link.symlink_to(real)
+            with patch.dict(os.environ, {"XDG_RUNTIME_DIR": str(link)}):
+                with self.assertRaises(PathError):
+                    runtime_dir()
+
+    def test_rejects_permissive_runtime_dir(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp) / "open"
+            base.mkdir()
+            os.chmod(base, 0o777)
+            with patch.dict(os.environ, {"XDG_RUNTIME_DIR": str(base)}):
+                with self.assertRaises(PathError):
+                    runtime_dir()
+
+    def test_fallback_rejects_symlink_and_tightens_owned_dir(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            link = root / "tmp-link"
+            link.symlink_to(root)
+            with patch("overhead.paths._tmp_root", return_value=link):
+                with patch.dict(os.environ, {}, clear=False):
+                    os.environ.pop("XDG_RUNTIME_DIR", None)
+                    with self.assertRaises(PathError):
+                        runtime_dir()
+            owned = root / f"omarchy-overhead-{os.getuid()}"
+            owned.mkdir()
+            os.chmod(owned, 0o755)
+            with patch("overhead.paths._tmp_root", return_value=root):
+                with patch.dict(os.environ, {}, clear=False):
+                    os.environ.pop("XDG_RUNTIME_DIR", None)
+                    dest = runtime_dir()
+            self.assertEqual(dest, owned)
+            self.assertEqual(stat.S_IMODE(os.lstat(owned).st_mode), 0o700)
+
+    def test_ensure_private_dir_rejects_parent_symlink(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            real = Path(tmp) / "real"
+            real.mkdir()
+            link = Path(tmp) / "link"
+            link.symlink_to(real)
+            with self.assertRaises(PathError):
+                ensure_private_dir(link / "child")
+
+
+class IpcAndHttpLimitTests(unittest.TestCase):
+    def test_append_ipc_caps_frame(self) -> None:
+        buf = append_ipc(b"abc", b"def")
+        self.assertEqual(buf, b"abcdef")
+        with self.assertRaises(ProtocolError):
+            append_ipc(b"x" * MAX_IPC_FRAME, b"y")
+
+    def test_http_json_respects_content_length_and_body_cap(self) -> None:
+        class FakeResp:
+            def __init__(self, body: bytes, length: str | None) -> None:
+                self.headers = {} if length is None else {"Content-Length": length}
+                self._body = body
+
+            def read(self, n: int = -1) -> bytes:
+                if not self._body:
+                    return b""
+                chunk, self._body = self._body[:n], self._body[n:]
+                return chunk
+
+            def __enter__(self) -> FakeResp:
+                return self
+
+            def __exit__(self, *_args: object) -> None:
+                return None
+
+        payload = json.dumps({"ok": True}).encode("utf-8")
+        with patch("urllib.request.urlopen", return_value=FakeResp(payload, str(len(payload)))):
+            self.assertEqual(read_json("http://example.test", timeout=1, user_agent="t"), {"ok": True})
+        with patch("urllib.request.urlopen", return_value=FakeResp(b"{}", str(MAX_HTTP_BYTES + 1))):
+            with self.assertRaises(HttpError):
+                read_json("http://example.test", timeout=1, user_agent="t")
+        with patch(
+            "urllib.request.urlopen",
+            return_value=FakeResp(b"x" * (MAX_HTTP_BYTES + 1), None),
+        ):
+            with self.assertRaises(HttpError):
+                read_json("http://example.test", timeout=1, user_agent="t")
+
+
+class DaemonSocketTests(unittest.TestCase):
+    def test_socket_is_private_and_rejects_oversize_frame(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            runtime = Path(tmp) / "run"
+            runtime.mkdir()
+            os.chmod(runtime, 0o700)
+            state = Path(tmp) / "state"
+            state.mkdir()
+            env = os.environ.copy()
+            env["XDG_RUNTIME_DIR"] = str(runtime)
+            env["XDG_STATE_HOME"] = str(state)
+            env["HOME"] = tmp
+            env["PYTHONPATH"] = str(ROOT) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+            proc = subprocess.Popen(
+                [sys.executable, "-m", "overhead", "daemon"],
+                cwd=str(ROOT),
+                env=env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+            sock_file = runtime / "omarchy-overhead" / "omarchy-overhead.sock"
+            try:
+                deadline = time.time() + 5
+                while time.time() < deadline and not sock_file.exists():
+                    time.sleep(0.05)
+                self.assertTrue(sock_file.exists(), "daemon did not create the control socket")
+                st = os.lstat(sock_file)
+                self.assertTrue(stat.S_ISSOCK(st.st_mode))
+                self.assertEqual(st.st_uid, os.getuid())
+                self.assertEqual(stat.S_IMODE(st.st_mode) & 0o077, 0)
+
+                ping = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                ping.settimeout(2)
+                ping.connect(str(sock_file))
+                ping.sendall(b'{"op":"ping"}\n')
+                reply = ping.recv(256)
+                ping.close()
+                self.assertIn(b'"ok": true', reply)
+
+                huge = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                huge.settimeout(2)
+                huge.connect(str(sock_file))
+                huge.sendall(b"x" * (MAX_IPC_FRAME + 8) + b"\n")
+                data = huge.recv(64)
+                huge.close()
+                self.assertEqual(data, b"")
+            finally:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    proc.wait(timeout=3)
 
 
 if __name__ == "__main__":

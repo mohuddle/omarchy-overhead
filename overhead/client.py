@@ -10,8 +10,8 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
-from .paths import pid_path, socket_path
-from .protocol import encode
+from .paths import PathError, pid_path, socket_path, unlink_socket
+from .protocol import ProtocolError, append_ipc, encode
 
 
 def _connect() -> socket.socket:
@@ -51,11 +51,10 @@ def stop_daemon() -> None:
         except OSError:
             pass
     sock = socket_path()
-    if sock.exists():
-        try:
-            sock.unlink()
-        except OSError:
-            pass
+    try:
+        unlink_socket(sock)
+    except (OSError, PathError):
+        pass
 
 
 def request_no_start(op: str, **fields: Any) -> dict[str, Any]:
@@ -67,10 +66,12 @@ def request_no_start(op: str, **fields: Any) -> dict[str, Any]:
             chunk = sock.recv(8192)
             if not chunk:
                 break
-            buf += chunk
+            buf = append_ipc(buf, chunk)
         if not buf:
             raise RuntimeError("no reply from overhead daemon")
         return json.loads(buf.split(b"\n", 1)[0].decode("utf-8"))
+    except ProtocolError as exc:
+        raise RuntimeError("daemon reply exceeds size limit") from exc
     finally:
         sock.close()
 
@@ -78,11 +79,10 @@ def request_no_start(op: str, **fields: Any) -> dict[str, Any]:
 def start_daemon() -> None:
     if daemon_alive():
         return
-    if socket_path().exists():
-        try:
-            socket_path().unlink()
-        except OSError:
-            pass
+    try:
+        unlink_socket(socket_path())
+    except (OSError, PathError, FileNotFoundError):
+        pass
     root = str(Path(__file__).resolve().parents[1])
     env = os.environ.copy()
     env["PYTHONPATH"] = root + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
@@ -117,7 +117,7 @@ def follow() -> Iterator[dict[str, Any]]:
             chunk = sock.recv(8192)
             if not chunk:
                 break
-            buf += chunk
+            buf = append_ipc(buf, chunk)
             while b"\n" in buf:
                 raw, buf = buf.split(b"\n", 1)
                 if raw.strip():

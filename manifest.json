@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.mohuddle.overhead",
   "name": "Overhead",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "mohuddle",
   "description": "Watch live ADS-B traffic and notify when a plane is within 1, 5, or 10 miles.",
   "license": "MIT",

@@ -11,6 +11,17 @@ MAX_AIRCRAFT = 40
 MIN_ALERT_ALT_FT = 500
 NOTIFY_MIN_INTERVAL = 8.0
 FETCH_DEDUP_SECONDS = 2.0
+MAX_IPC_FRAME = 64 * 1024
+
+
+class ProtocolError(RuntimeError):
+    pass
+
+
+def append_ipc(buf: bytes, chunk: bytes, *, limit: int = MAX_IPC_FRAME) -> bytes:
+    if len(buf) + len(chunk) > limit:
+        raise ProtocolError("IPC frame exceeds size limit")
+    return buf + chunk
 
 
 def encode(message: dict[str, Any]) -> bytes:

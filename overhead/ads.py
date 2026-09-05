@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 import math
 import urllib.error
-import urllib.request
 from typing import Any
 
 from .geo import bearing_deg, haversine_miles, innermost_ring, miles_to_nm
+from .httpjson import HttpError, read_json
 from .location import USER_AGENT
 from .protocol import LIST_RADIUS_MI, MAX_AIRCRAFT, QUERY_NM
 
@@ -18,9 +18,7 @@ class AdsError(RuntimeError):
 
 
 def _http_json(url: str) -> Any:
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
-    with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    return read_json(url, timeout=HTTP_TIMEOUT, user_agent=USER_AGENT)
 
 
 def _callsign(*parts: Any) -> str:
@@ -190,7 +188,7 @@ def fetch_nearby(
     for name, url in providers:
         try:
             aircraft = _fetch_exchange(url, origin, rings, ignore_ground)
-        except (AdsError, urllib.error.URLError, TimeoutError, json.JSONDecodeError, ValueError) as exc:
+        except (AdsError, HttpError, urllib.error.URLError, TimeoutError, json.JSONDecodeError, ValueError) as exc:
             errors.append(f"{name}: {exc}")
             continue
         if aircraft:
@@ -210,7 +208,7 @@ def fetch_nearby(
         filtered = _filter(aircraft, ignore_ground=ignore_ground)
         if filtered or empty is None:
             return filtered, "opensky"
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, ValueError) as exc:
+    except (HttpError, urllib.error.URLError, TimeoutError, json.JSONDecodeError, ValueError) as exc:
         errors.append(f"opensky: {exc}")
     if empty is not None:
         return empty
