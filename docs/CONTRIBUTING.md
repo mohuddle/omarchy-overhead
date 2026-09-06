@@ -1,14 +1,25 @@
-# omarchy-overhead
+# Contributing to Overhead
 
-Nearby ADS-B aircraft for Omarchy. A curses TUI and a Quattro bar plugin.
-Public feeder APIs (adsb.fi, adsb.lol, OpenSky), not a scrape of globe.adsbexchange.com.
+Omarchy bar-widget plugin (`io.github.mohuddle.overhead`). QML + plain JavaScript, plus a stdlib Python package for the daemon, CLI, and curses TUI. No extra pip packages. No build step.
+
+Do not put `AGENTS.md`, `CLAUDE.md`, or other coding-agent instruction files in this tree. `omarchy plugin add` clones the repository into the plugin directory, and compatible agents auto-load those names from an installed plugin.
+
+## Verify
+
+```bash
+omarchy plugin validate .
+node tests/model.test.js
+python3 tests/test_overhead.py
+```
+
+Run all three before committing.
 
 ## Layout
 
-- Root QML + `manifest.json` — Omarchy bar widget `io.github.mohuddle.overhead` (marketplace clone-from-root)
+- Root QML + `manifest.json` — bar widget `io.github.mohuddle.overhead` (marketplace clone-from-root)
 - `overhead/` — Python package: location, ADS-B fetch, Unix-socket daemon, CLI, curses TUI
 - `bin/overhead` — wrapper onto the package
-- `scripts/setup.sh` — `~/.local/bin` link and plugin install
+- `scripts/setup.sh` — `~/.local/bin` link (GeoClue is never installed)
 
 ## Runtime
 
@@ -21,7 +32,7 @@ Public feeder APIs (adsb.fi, adsb.lol, OpenSky), not a scrape of globe.adsbexcha
 
 ## Conventions
 
-- Do not call ADS-B Exchange's keyed API or scrape the globe page.
+- Do not call ADS-B Exchange's keyed API or scrape the globe page. Public feeder APIs only (`adsb.fi`, `adsb.lol`, OpenSky).
 - Default location is a ZIP, city, or coordinates. Do not require or install GeoClue. Do not use IP geolocation. Device locate is optional and hidden unless GeoClue is already installed.
 - Plugin and TUI talk to the daemon through the existing JSON-lines protocol.
 - Distances are statute miles. ADS-B query radius is nautical miles internally.

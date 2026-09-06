@@ -114,6 +114,8 @@ node tests/model.test.js
 python3 tests/test_overhead.py
 ```
 
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
+
 ## License
 
 MIT. See [LICENSE](LICENSE). ADS-B feed terms are their own; this project does not scrape ADS-B Exchange's globe.
