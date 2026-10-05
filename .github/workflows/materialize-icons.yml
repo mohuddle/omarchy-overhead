@@ -1,7 +1,11 @@
 name: Materialize branding icons
 on:
   push:
-    paths: ["**/*.png.b64", "**/*.png.b64.part*", ".github/workflows/materialize-icons.yml"]
+    paths:
+      - "branding/**/*.svg"
+      - "branding/android/ic_launcher.xml"
+      - "scripts/materialize_icons.py"
+      - ".github/workflows/materialize-icons.yml"
   workflow_dispatch:
 permissions:
   contents: write
@@ -10,24 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Join parts and decode base64 PNGs
-        run: |
-          set -euo pipefail
-          while IFS= read -r -d '' part0; do
-            base="${part0%.part00}"
-            cat "$base".part* > "$base"
-            rm -f "$base".part*
-            echo "Joined $base"
-          done < <(find . -name '*.png.b64.part00' -print0)
-          count=0
-          while IFS= read -r -d '' f; do
-            out="${f%.b64}"
-            base64 -d < "$f" > "$out"
-            rm -f "$f"
-            echo "Wrote $out ($(wc -c < "$out") bytes)"
-            count=$((count+1))
-          done < <(find . -name '*.png.b64' -print0)
-          echo "Decoded $count files"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install render deps
+        run: pip install cairosvg pillow
+      - name: Render PNGs from Mobitecture SVGs
+        run: python3 scripts/materialize_icons.py
       - name: Commit materialized PNGs
         run: |
           git config user.name "Mobitecture"
