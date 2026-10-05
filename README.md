@@ -1,5 +1,7 @@
 # Overhead for Omarchy
 
+> Built by [Mobitecture](https://github.com/mohuddle) · *apps, architected.*
+
 A small TUI and an Omarchy Quattro bar plugin that watches live ADS-B traffic around you and pops a desktop message when a plane comes within **1**, **5**, or **10** miles.
 
 ![Bar panel](preview.png)
@@ -119,3 +121,6 @@ See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
 ## License
 
 MIT. See [LICENSE](LICENSE). ADS-B feed terms are their own; this project does not scrape ADS-B Exchange's globe.
+
+---
+Made by [Mobitecture](https://github.com/mohuddle) · apps, architected.
