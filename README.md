@@ -1,6 +1,6 @@
 # Overhead for Omarchy
 
-![Overhead icon](branding/overhead-icon-vibrant.png)
+![Overhead icon](branding/overhead-icon-vibrant.svg)
 
 > Built by [Mobitecture](https://github.com/mohuddle) · *apps, architected.*
 
