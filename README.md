@@ -1,5 +1,7 @@
 # Overhead for Omarchy
 
+![Overhead icon](branding/overhead-icon-vibrant.png)
+
 > Built by [Mobitecture](https://github.com/mohuddle) · *apps, architected.*
 
 A small TUI and an Omarchy Quattro bar plugin that watches live ADS-B traffic around you and pops a desktop message when a plane comes within **1**, **5**, or **10** miles.

@@ -1,7 +1,7 @@
 name: Materialize branding icons
 on:
   push:
-    paths: ["**/*.png.b64", ".github/workflows/materialize-icons.yml"]
+    paths: ["**/*.png.b64", "**/*.png.b64.part*", ".github/workflows/materialize-icons.yml"]
   workflow_dispatch:
 permissions:
   contents: write
@@ -10,9 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Decode base64 PNGs
+      - name: Join parts and decode base64 PNGs
         run: |
           set -euo pipefail
+          while IFS= read -r -d '' part0; do
+            base="${part0%.part00}"
+            cat "$base".part* > "$base"
+            rm -f "$base".part*
+            echo "Joined $base"
+          done < <(find . -name '*.png.b64.part00' -print0)
           count=0
           while IFS= read -r -d '' f; do
             out="${f%.b64}"
