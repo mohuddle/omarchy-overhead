@@ -131,7 +131,7 @@ Panel {
               id: locationField
               width: Math.max(Style.space(200), parent.width - Style.space(service && service.canLocate ? 220 : 80))
               foreground: root.foreground
-              placeholderText: "72714, Santa Monica, or 34.05, -118.24"
+              placeholderText: "90401, Santa Monica, or 34.0195, -118.4912"
               text: root.locationDraft
               onTextChanged: root.locationDraft = text
             }
