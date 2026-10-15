@@ -152,7 +152,7 @@ class AlertTests(unittest.TestCase):
             "bearing": 225.0,
         }
         events, _ = new_alerts({}, [plane], [1, 5, 10])
-        self.assertEqual(body_for(events[0]), "UAL1 (B738) is 4.7 mi SW away, 3,000 ft.")
+        self.assertEqual(body_for(events[0]), "UAL1 (B738) is SW, 4.7 mi away, 3,000 ft.")
 
     def test_coalesce_swarm(self) -> None:
         events = [

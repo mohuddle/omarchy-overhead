@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
-from .geo import format_alt, format_range, rings_inside
+from .geo import compass_point, format_alt, format_miles, rings_inside
 from .protocol import MIN_ALERT_ALT_FT
 
 
@@ -73,12 +73,13 @@ def body_for(event: dict[str, Any]) -> str:
     callsign = str(event.get("callsign") or event.get("hex") or "Aircraft")
     kind = str(event.get("type") or "").strip()
     label = f"{callsign} ({kind})" if kind else callsign
+    miles = format_miles(float(event.get("miles") or 0))
     bearing = event.get("bearing")
-    distance = format_range(
-        float(event.get("miles") or 0),
-        float(bearing) if isinstance(bearing, (int, float)) else None,
-    )
-    parts = [f"{label} is {distance} away"]
+    if isinstance(bearing, (int, float)):
+        lead = f"{label} is {compass_point(float(bearing))}, {miles} away"
+    else:
+        lead = f"{label} is {miles} away"
+    parts = [lead]
     alt = format_alt(event.get("alt_ft") if isinstance(event.get("alt_ft"), int) else event.get("alt_ft"), bool(event.get("ground")))
     if alt:
         parts.append(alt)

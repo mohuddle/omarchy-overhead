@@ -89,7 +89,7 @@ overhead notify on
 ~/.local/state/omarchy/overhead/status.json
 ```
 
-Grounded aircraft, and anything below 500 ft, are ignored for toasts so a nearby airport does not spam you. The list still shows them. Distances are statute miles, with the direction from your place: N, NE, E, SE, S, SW, W, or NW. A row looks like `4.7 mi NE  UAL2373  B39M  4,200 ft`. The watcher polls about every 30 seconds. A saved 12-second interval, the previous default, moves to 30. Any other saved interval stays. At most one notification is sent per poll, and not more often than every 8 seconds. The toast names the same compass point.
+Grounded aircraft, and anything below 500 ft, are ignored for toasts so a nearby airport does not spam you. The list still shows them. Distances are statute miles, with the direction from your place: N, NE, E, SE, S, SW, W, or NW. A row looks like `4.7 mi NE  UAL2373  B39M  4,200 ft`. The watcher polls about every 30 seconds. A saved 12-second interval, the previous default, moves to 30. Any other saved interval stays. At most one notification is sent per poll, and not more often than every 8 seconds. A toast reads `LXJ328 (E545) is SE, 4.8 mi away, 17,425 ft`. The compass point comes before the distance.
 
 ## Optional device location
 
