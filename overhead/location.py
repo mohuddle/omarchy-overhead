@@ -10,7 +10,7 @@ from .httpjson import read_json
 
 US_ZIP_RE = re.compile(r"^\d{5}(?:-\d{4})?$")
 
-USER_AGENT = "omarchy-overhead/0.2.1 (personal ADS-B watcher; https://github.com/mohuddle/omarchy-overhead)"
+USER_AGENT = "omarchy-overhead/0.3.0 (personal ADS-B watcher; https://github.com/mohuddle/omarchy-overhead)"
 HTTP_TIMEOUT = 10
 
 

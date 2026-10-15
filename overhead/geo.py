@@ -79,10 +79,26 @@ def innermost_ring(miles: float, enabled: Iterable[int]) -> int | None:
     return min(inside) if inside else None
 
 
+_COMPASS_POINTS = ("N", "NE", "E", "SE", "S", "SW", "W", "NW")
+
+
+def compass_point(bearing: float) -> str:
+    normalized = float(bearing) % 360.0
+    index = math.floor((normalized + 22.5) / 45.0) % 8
+    return _COMPASS_POINTS[index]
+
+
 def format_miles(miles: float) -> str:
     if miles < 10:
         return f"{miles:.1f} mi"
     return f"{miles:.0f} mi"
+
+
+def format_range(miles: float, bearing: float | None = None) -> str:
+    text = format_miles(miles)
+    if isinstance(bearing, (int, float)) and math.isfinite(float(bearing)):
+        return f"{text} {compass_point(float(bearing))}"
+    return text
 
 
 def format_alt(alt_ft: int | None, ground: bool) -> str:

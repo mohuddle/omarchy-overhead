@@ -93,6 +93,22 @@ function formatMiles(miles) {
   return Math.round(n) + " mi"
 }
 
+var COMPASS_POINTS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+
+function compassPoint(bearing) {
+  var n = Number(bearing)
+  if (!isFinite(n)) return ""
+  var normalized = ((n % 360) + 360) % 360
+  var index = Math.floor((normalized + 22.5) / 45) % 8
+  return COMPASS_POINTS[index]
+}
+
+function formatRange(miles, bearing) {
+  var text = formatMiles(miles)
+  var point = compassPoint(bearing)
+  return point ? text + " " + point : text
+}
+
 function formatAlt(item) {
   if (!item) return ""
   if (item.ground === true || item.alt_ft === null || item.alt_ft === undefined) return "ground"
@@ -115,7 +131,7 @@ function nearestLine(status) {
   var nearest = status && status.nearest
   if (!nearest) return hasLocation(status) ? "No aircraft in range" : "Set a location to watch the sky"
   var callsign = String(nearest.callsign || nearest.hex || "Aircraft")
-  return callsign + " · " + formatMiles(nearest.miles)
+  return callsign + " · " + formatRange(nearest.miles, nearest.bearing)
 }
 
 function statusText(status) {
@@ -144,7 +160,7 @@ function aircraftLine(item) {
   var callsign = String(item.callsign || item.hex || "")
   var kind = String(item.type || "")
   var alt = formatAlt(item)
-  var bits = [formatMiles(item.miles), callsign]
+  var bits = [formatRange(item.miles, item.bearing), callsign]
   if (kind) bits.push(kind)
   if (alt) bits.push(alt)
   return bits.join("  ")
@@ -175,6 +191,8 @@ if (typeof module !== "undefined") {
     needsConsent: needsConsent,
     canLocate: canLocate,
     formatMiles: formatMiles,
+    compassPoint: compassPoint,
+    formatRange: formatRange,
     formatAlt: formatAlt,
     locationLabel: locationLabel,
     nearestLine: nearestLine,

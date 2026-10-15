@@ -4,7 +4,7 @@ import json
 from typing import Any
 
 from .paths import config_path
-from .protocol import POLL_SECONDS, RINGS
+from .protocol import POLL_SECONDS, PREVIOUS_POLL_SECONDS, RINGS
 
 
 DEFAULTS: dict[str, Any] = {
@@ -40,9 +40,12 @@ def load() -> dict[str, Any]:
     data["ignore_ground"] = bool(data.get("ignore_ground", True))
     data["watch"] = bool(data.get("watch"))
     try:
-        data["poll_seconds"] = max(5, int(data.get("poll_seconds") or POLL_SECONDS))
+        seconds = int(data.get("poll_seconds") or POLL_SECONDS)
     except (TypeError, ValueError):
-        data["poll_seconds"] = POLL_SECONDS
+        seconds = POLL_SECONDS
+    if seconds == PREVIOUS_POLL_SECONDS:
+        seconds = POLL_SECONDS
+    data["poll_seconds"] = max(5, seconds)
     return data
 
 

@@ -12,7 +12,7 @@ readsb / ADS-B Exchange v2 JSON used by [globe.adsbexchange.com](https://globe.a
 ADS-B Exchange's own REST gateway is keyed and is not called. This project
 does not scrape the globe site.
 
-Please treat the feeds gently (this watcher polls about once every 12 seconds)
+Please treat the feeds gently (this watcher polls about once every 30 seconds)
 and consider running a receiver if you use the data regularly.
 
 ## Cessna icon

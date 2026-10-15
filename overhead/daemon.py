@@ -11,7 +11,7 @@ import time
 from typing import Any
 
 from . import ads, alerts, config, location, notify
-from .geo import format_coords, format_miles, valid_coords
+from .geo import format_coords, format_range, valid_coords
 from .paths import (
     PathError,
     bind_private_unix_socket,
@@ -25,6 +25,7 @@ from .protocol import (
     FETCH_DEDUP_SECONDS,
     MIN_ALERT_ALT_FT,
     NOTIFY_MIN_INTERVAL,
+    POLL_SECONDS,
     RINGS,
     ProtocolError,
     append_ipc,
@@ -46,7 +47,7 @@ class OverheadDaemon:
         self._last_notify = 0.0
         data = config.load()
         self._apply_config(data)
-        self.poll_seconds = int(data.get("poll_seconds") or 12)
+        self.poll_seconds = int(data.get("poll_seconds") or POLL_SECONDS)
 
     def _apply_config(self, data: dict[str, Any]) -> None:
         loc = config.location_from_config(data)
@@ -161,7 +162,12 @@ class OverheadDaemon:
                 if gap >= NOTIFY_MIN_INTERVAL:
                     for event in alerts.coalesce(events):
                         notify.send_alert(event)
-                        last_alert = f"{event.get('callsign')} {format_miles(float(event.get('miles') or 0))}"
+                        bearing = event.get("bearing")
+                        distance = format_range(
+                            float(event.get("miles") or 0),
+                            float(bearing) if isinstance(bearing, (int, float)) else None,
+                        )
+                        last_alert = f"{event.get('callsign')} {distance}"
                     self._last_notify = time.monotonic()
             self._last_fetch = time.monotonic()
             self.set_status(

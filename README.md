@@ -54,7 +54,7 @@ overhead tui
 | `a` | device location (only if GeoClue is installed) |
 | `space` | start / stop watching |
 | `1` / `5` / `0` | toggle 1 / 5 / 10 mile rings |
-| `n` | notifications on / off |
+| `n` | alerts on / off |
 | `r` | fetch now |
 | `c` | clear stored location |
 | `q` | quit |
@@ -63,7 +63,7 @@ The first run stays idle until you set a ZIP, city, or coordinates.
 
 ## Plugin
 
-Left click the plane: ZIP/city field, nearby traffic, ring toggles, Watch / Notify / TUI. The Device button appears only when GeoClue is already on the machine. Right click toggles watching. The icon uses the theme accent while something is inside 1 mile.
+Left click the plane: ZIP/city field, nearby traffic, ring toggles, Watch / Turn alerts off / TUI. While alerts are on, that button uses the same selected color as an enabled distance ring. The words are the next press. The Device button appears only when GeoClue is already on the machine. Right click toggles watching. The icon uses the theme accent while something is inside 1 mile.
 
 Clicking a notification opens the panel.
 
@@ -89,7 +89,7 @@ overhead notify on
 ~/.local/state/omarchy/overhead/status.json
 ```
 
-Grounded aircraft, and anything below 500 ft, are ignored for toasts so a nearby airport does not spam you. The list still shows them. Distances are statute miles. At most one notification is sent per poll, and not more often than every 8 seconds.
+Grounded aircraft, and anything below 500 ft, are ignored for toasts so a nearby airport does not spam you. The list still shows them. Distances are statute miles, with the direction from your place: N, NE, E, SE, S, SW, W, or NW. A row looks like `4.7 mi NE  UAL2373  B39M  4,200 ft`. The watcher polls about every 30 seconds. A saved 12-second interval, the previous default, moves to 30. Any other saved interval stays. At most one notification is sent per poll, and not more often than every 8 seconds. The toast names the same compass point.
 
 ## Optional device location
 

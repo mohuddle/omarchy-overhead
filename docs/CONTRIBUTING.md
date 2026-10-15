@@ -24,10 +24,10 @@ Run all three before committing.
 ## Runtime
 
 - Config / status: `~/.local/state/omarchy/overhead/{config.json,status.json}`
-- TUI: `overhead tui` — `m` ZIP/city, `a` device location only if GeoClue is present, space watch, `1`/`5`/`0` rings, `n` notify, `q` quit
+- TUI: `overhead tui` — `m` ZIP/city, `a` device location only if GeoClue is present, space watch, `1`/`5`/`0` rings, `n` alerts, `q` quit
 - Plugin: left click opens the panel; right click toggles watching
 - Alerts fire once per aircraft per 1 / 5 / 10 mile ring until that aircraft leaves
-- Toasts skip ground and <500 ft, one per poll, at most every 8 seconds
+- Toasts skip ground and <500 ft, one per poll, at most every 8 seconds. Poll default is 30 seconds. List rows and toasts include an 8-point bearing from the stored place.
 - `--exec` on omarchy-notification-send comes after title and body
 
 ## Conventions

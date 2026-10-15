@@ -23,14 +23,18 @@ from overhead.alerts import alertable, body_for, coalesce, new_alerts, title_for
 from overhead.notify import PLUGIN_ID, notification_argv
 from overhead.paths import PathError, ensure_private_dir, runtime_dir
 from overhead.protocol import MAX_IPC_FRAME, ProtocolError, append_ipc
+from overhead import config
 from overhead.geo import (
+    compass_point,
     format_miles,
+    format_range,
     haversine_miles,
     innermost_ring,
     parse_location_text,
     rings_inside,
     valid_coords,
 )
+from overhead.protocol import POLL_SECONDS
 
 
 class GeoTests(unittest.TestCase):
@@ -59,6 +63,23 @@ class GeoTests(unittest.TestCase):
         self.assertEqual(innermost_ring(3.2, [1, 5, 10]), 5)
         self.assertEqual(format_miles(0.8), "0.8 mi")
         self.assertEqual(format_miles(12.4), "12 mi")
+
+    def test_compass_points(self) -> None:
+        self.assertEqual(compass_point(0), "N")
+        self.assertEqual(compass_point(22.4), "N")
+        self.assertEqual(compass_point(22.5), "NE")
+        self.assertEqual(compass_point(90), "E")
+        self.assertEqual(compass_point(135), "SE")
+        self.assertEqual(compass_point(180), "S")
+        self.assertEqual(compass_point(225), "SW")
+        self.assertEqual(compass_point(270), "W")
+        self.assertEqual(compass_point(315), "NW")
+        self.assertEqual(compass_point(337.4), "NW")
+        self.assertEqual(compass_point(337.5), "N")
+        self.assertEqual(compass_point(359.9), "N")
+        self.assertEqual(compass_point(-22.5), "N")
+        self.assertEqual(format_range(4.7, 45), "4.7 mi NE")
+        self.assertEqual(format_range(4.7, None), "4.7 mi")
 
 
 class AdsTests(unittest.TestCase):
@@ -120,6 +141,19 @@ class AlertTests(unittest.TestCase):
         self.assertEqual(reenter[0]["ring"], 10)
         self.assertIn("8.0 mi", body_for(reenter[0]))
 
+    def test_body_uses_bearing(self) -> None:
+        plane = {
+            "hex": "aa",
+            "callsign": "UAL1",
+            "type": "B738",
+            "miles": 4.7,
+            "alt_ft": 3000,
+            "ground": False,
+            "bearing": 225.0,
+        }
+        events, _ = new_alerts({}, [plane], [1, 5, 10])
+        self.assertEqual(body_for(events[0]), "UAL1 (B738) is 4.7 mi SW away, 3,000 ft.")
+
     def test_coalesce_swarm(self) -> None:
         events = [
             {"hex": "a", "callsign": "A", "miles": 4.0, "ring": 5, "type": "C172"},
@@ -139,6 +173,25 @@ class AlertTests(unittest.TestCase):
         self.assertFalse(alertable({"ground": True, "alt_ft": 8000}))
         self.assertFalse(alertable({"ground": False, "alt_ft": 200}))
         self.assertTrue(alertable({"ground": False, "alt_ft": 1200}))
+
+
+class ConfigTests(unittest.TestCase):
+    def test_saved_twelve_second_poll_moves_to_thirty(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "config.json"
+            path.write_text(json.dumps({"poll_seconds": 12}), encoding="utf-8")
+            with patch("overhead.config.config_path", return_value=path):
+                data = config.load()
+        self.assertEqual(POLL_SECONDS, 30)
+        self.assertEqual(data["poll_seconds"], 30)
+
+    def test_custom_poll_stays(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "config.json"
+            path.write_text(json.dumps({"poll_seconds": 45}), encoding="utf-8")
+            with patch("overhead.config.config_path", return_value=path):
+                data = config.load()
+        self.assertEqual(data["poll_seconds"], 45)
 
 
 class NotifyTests(unittest.TestCase):

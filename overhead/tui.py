@@ -5,7 +5,7 @@ import threading
 from typing import Any
 
 from . import client
-from .geo import format_alt, format_coords, format_miles
+from .geo import compass_point, format_alt, format_coords, format_miles
 from .protocol import RINGS
 
 
@@ -166,7 +166,7 @@ def _loop(stdscr: curses.window, state: TuiState) -> None:
         loc = status.get("location")
         loc_key = () if not loc else (loc.get("lat"), loc.get("lon"), loc.get("source"))
         planes = tuple(
-            (row.get("hex"), row.get("miles"), row.get("callsign"), row.get("alt_ft"))
+            (row.get("hex"), row.get("miles"), row.get("bearing"), row.get("callsign"), row.get("alt_ft"))
             for row in (status.get("aircraft") or [])[:24]
         )
         frame = (
@@ -245,13 +245,13 @@ def _draw(
     _put(
         stdscr,
         1,
-        "rings  " + _ring_marks(rings) + ("   notify on" if status.get("notify") else "   notify off"),
+        "rings  " + _ring_marks(rings) + ("   alerts on" if status.get("notify") else "   alerts off"),
         cols,
         curses.color_pair(3),
     )
-    help_line = "space watch   m ZIP/city   1/5/0 rings   n notify   r refresh   q quit"
+    help_line = "space watch   m ZIP/city   1/5/0 rings   n alerts   r refresh   q quit"
     if status.get("can_locate"):
-        help_line = "space watch   m ZIP/city   a device location   1/5/0 rings   n notify   r refresh   q quit"
+        help_line = "space watch   m ZIP/city   a device location   1/5/0 rings   n alerts   r refresh   q quit"
     _put(stdscr, 2, help_line, cols, curses.color_pair(3))
     if mode == "prompt":
         _put(stdscr, 3, "ZIP, city, or coordinates: " + prompt, cols, curses.color_pair(1) | curses.A_BOLD)
@@ -275,6 +275,8 @@ def _draw(
             if row >= height:
                 break
             miles = float(item.get("miles") or 0)
+            bearing = item.get("bearing")
+            point = compass_point(float(bearing)) if isinstance(bearing, (int, float)) else ""
             ring = item.get("ring")
             attr = curses.color_pair(4) | curses.A_BOLD if ring == 1 else (
                 curses.color_pair(1) if ring == 5 else (curses.color_pair(2) if ring == 10 else 0)
@@ -284,7 +286,8 @@ def _draw(
             alt = format_alt(item.get("alt_ft"), bool(item.get("ground")))
             gs = item.get("gs_kt")
             speed = f"{gs:.0f} kt" if isinstance(gs, (int, float)) else ""
-            line = f"{format_miles(miles):>7}  {callsign:<8}  {kind:<4}  {alt:<11}  {speed}"
+            ranged = format_miles(miles) + (f" {point}" if point else "")
+            line = f"{ranged:>10}  {callsign:<8}  {kind:<4}  {alt:<11}  {speed}"
             _put(stdscr, row, line, cols, attr)
     try:
         stdscr.refresh()

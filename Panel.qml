@@ -199,10 +199,11 @@ Panel {
               onClicked: if (service) service.toggle()
             }
             Button {
-              text: service && service.notify ? "Notify on" : "Notify off"
+              text: service && service.notify ? "Turn alerts off" : "Turn alerts on"
               bordered: true
               selected: service && service.notify
               foreground: root.foreground
+              tooltipText: service && service.notify ? "Ring alerts are on" : "Ring alerts are off"
               onClicked: if (service) service.toggleNotify()
             }
             Button {
