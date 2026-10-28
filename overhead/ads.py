@@ -117,10 +117,10 @@ def normalize_opensky(row: list[Any], origin: tuple[float, float], rings: list[i
 
 
 def _filter(aircraft: list[dict[str, Any]], *, ignore_ground: bool) -> list[dict[str, Any]]:
+    # Ground aircraft stay listed. alertable() still skips them, and anything under 500 ft.
+    del ignore_ground
     out: list[dict[str, Any]] = []
     for item in aircraft:
-        if ignore_ground and item.get("ground"):
-            continue
         seen = item.get("seen")
         if seen is not None and seen > 60:
             continue

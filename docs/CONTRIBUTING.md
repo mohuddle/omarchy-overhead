@@ -27,12 +27,12 @@ Run all three before committing.
 - TUI: `overhead tui` — `m` ZIP/city, `a` device location only if GeoClue is present, space watch, `1`/`5`/`0` rings, `n` alerts, `q` quit
 - Plugin: left click opens the panel; right click toggles watching
 - Alerts fire once per aircraft per 1 / 5 / 10 mile ring until that aircraft leaves
-- Toasts skip ground and <500 ft, one per poll, at most every 8 seconds. Poll default is 30 seconds. List rows and toasts include an 8-point bearing from the stored place.
-- `--exec` on omarchy-notification-send comes after title and body
+- Toasts skip ground and <500 ft, one per poll, at most every 8 seconds. Poll default is 30 seconds. List rows and toasts include an 8-point bearing from the stored place. Ground aircraft stay in the list.
+- A row, TUI `o`, or a single-plane toast opens `https://globe.adsbexchange.com/?icao=` plus a lowercase 6-digit hex in the browser. A grouped toast opens the panel. `--exec` on omarchy-notification-send comes after title and body.
 
 ## Conventions
 
-- Do not call ADS-B Exchange's keyed API or scrape the globe page. Public feeder APIs only (`adsb.fi`, `adsb.lol`, OpenSky).
+- Do not call ADS-B Exchange's keyed API or scrape the globe page. A browser open of the public globe URL is the one allowed use. Public feeder APIs only (`adsb.fi`, `adsb.lol`, OpenSky).
 - Default location is a ZIP, city, or coordinates. Do not require or install GeoClue. Do not use IP geolocation. Device locate is optional and hidden unless GeoClue is already installed.
 - Plugin and TUI talk to the daemon through the existing JSON-lines protocol.
 - Distances are statute miles. ADS-B query radius is nautical miles internally.

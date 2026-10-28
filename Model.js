@@ -166,6 +166,12 @@ function aircraftLine(item) {
   return bits.join("  ")
 }
 
+function globeUrl(hex) {
+  var cleaned = String(hex == null ? "" : hex).trim().toLowerCase()
+  if (!/^[0-9a-f]{6}$/.test(cleaned)) return ""
+  return "https://globe.adsbexchange.com/?icao=" + cleaned
+}
+
 function countIn(status, ring) {
   if (!status || !status.counts) return 0
   return Number(status.counts[String(ring)] || 0)
@@ -200,6 +206,7 @@ if (typeof module !== "undefined") {
     tooltipText: tooltipText,
     ringActive: ringActive,
     aircraftLine: aircraftLine,
+    globeUrl: globeUrl,
     countIn: countIn,
     fileUrlToPath: fileUrlToPath
   }

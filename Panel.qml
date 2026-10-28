@@ -29,6 +29,11 @@ Panel {
   function toggle() { if (opened) close(); else open() }
   function switchPanel(direction) { return false }
   function ringOn(ring) { return service ? Model.ringActive(service, ring) : true }
+  function openGlobe(url) {
+    var target = String(url || "")
+    if (!/^https:\/\/globe\.adsbexchange\.com\/\?icao=[0-9a-f]{6}$/.test(target)) return
+    Qt.openUrlExternally(target)
+  }
 
   readonly property int pinTopMargin: {
     if (root.bar && root.bar.position === "top")
@@ -248,15 +253,33 @@ Panel {
 
               Repeater {
                 model: root.listedAircraft
-                delegate: Text {
+                delegate: Item {
+                  id: row
                   required property var modelData
                   width: planeColumn.width
-                  textFormat: Text.PlainText
-                  text: Model.aircraftLine(modelData)
-                  color: modelData && modelData.ring === 1 ? root.accent : root.foreground
-                  font.family: root.fontFamily
-                  font.pixelSize: Style.font.body
-                  wrapMode: Text.Wrap
+                  implicitHeight: line.implicitHeight
+                  readonly property string globeUrl: Model.globeUrl(modelData && modelData.hex)
+
+                  Text {
+                    id: line
+                    width: parent.width
+                    textFormat: Text.PlainText
+                    text: Model.aircraftLine(modelData)
+                    color: modelData && modelData.ring === 1 ? root.accent : root.foreground
+                    font.family: root.fontFamily
+                    font.pixelSize: Style.font.body
+                    font.underline: rowArea.containsMouse && row.globeUrl !== ""
+                    wrapMode: Text.Wrap
+                  }
+
+                  MouseArea {
+                    id: rowArea
+                    anchors.fill: parent
+                    enabled: row.globeUrl !== ""
+                    hoverEnabled: true
+                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: root.openGlobe(row.globeUrl)
+                  }
                 }
               }
             }

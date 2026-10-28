@@ -16,11 +16,11 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from overhead.ads import normalize_exchange, normalize_opensky
+from overhead.ads import _filter, normalize_exchange, normalize_opensky
 from overhead.httpjson import MAX_HTTP_BYTES, HttpError, read_json
 from overhead.location import LocationError, US_ZIP_RE, device_locate_available, geocode_place
 from overhead.alerts import alertable, body_for, coalesce, new_alerts, title_for, urgency_for
-from overhead.notify import PLUGIN_ID, notification_argv
+from overhead.notify import PLUGIN_ID, globe_url, notification_argv
 from overhead.paths import PathError, ensure_private_dir, runtime_dir
 from overhead.protocol import MAX_IPC_FRAME, ProtocolError, append_ipc
 from overhead import config
@@ -120,6 +120,17 @@ class AdsTests(unittest.TestCase):
         self.assertEqual(plane["callsign"], "UAL2373")
         self.assertTrue(math.isclose(plane["alt_ft"] or 0, 4200, abs_tol=5))
 
+    def test_list_keeps_ground_aircraft(self) -> None:
+        listed = _filter(
+            [
+                {"hex": "abc123", "miles": 1.2, "ground": True, "seen": 1},
+                {"hex": "a5d28c", "miles": 3.0, "ground": False, "seen": 1},
+                {"hex": "bbbbbb", "miles": 0.4, "ground": True, "seen": 90},
+            ],
+            ignore_ground=True,
+        )
+        self.assertEqual([row["hex"] for row in listed], ["abc123", "a5d28c"])
+
 
 class AlertTests(unittest.TestCase):
     def test_enter_inner_ring_only(self) -> None:
@@ -204,6 +215,45 @@ class NotifyTests(unittest.TestCase):
         self.assertLess(title_at, body_at)
         self.assertLess(body_at, exec_at)
         self.assertEqual(argv[exec_at + 1 : exec_at + 5], ["omarchy-shell", "shell", "summon", PLUGIN_ID])
+
+    def test_globe_url_is_lowercase_hex_only(self) -> None:
+        self.assertEqual(globe_url("A5D28C"), "https://globe.adsbexchange.com/?icao=a5d28c")
+        self.assertEqual(globe_url("a5d28c\n"), "https://globe.adsbexchange.com/?icao=a5d28c")
+        for bad in ("", "abc", "a5d28c7", "a5d28g", "a5d28c;rm", "../etc", "a5d2\n8c", "https://evil.example"):
+            self.assertEqual(globe_url(bad), "")
+
+    def test_single_plane_alert_opens_the_globe(self) -> None:
+        argv = notification_argv(
+            "Plane overhead",
+            "UAL1 is SW, 4.7 mi away.",
+            "critical",
+            {"hex": "A5D28C", "extra": 0},
+        )
+        exec_at = argv.index("--exec")
+        self.assertLess(argv.index("UAL1 is SW, 4.7 mi away."), exec_at)
+        self.assertEqual(
+            argv[exec_at + 1 :],
+            ["/usr/bin/xdg-open", "--", "https://globe.adsbexchange.com/?icao=a5d28c"],
+        )
+
+    def test_grouped_alert_opens_the_panel(self) -> None:
+        argv = notification_argv(
+            "3 aircraft within 5 miles",
+            "B and 2 more.",
+            "normal",
+            {"hex": "a5d28c", "extra": 2},
+        )
+        exec_at = argv.index("--exec")
+        self.assertEqual(argv[exec_at + 1 : exec_at + 5], ["omarchy-shell", "shell", "summon", PLUGIN_ID])
+
+    def test_bad_hex_alert_opens_the_panel(self) -> None:
+        argv = notification_argv(
+            "Plane overhead",
+            "body",
+            "normal",
+            {"hex": "a5d28c;touch", "extra": 0},
+        )
+        self.assertEqual(argv[argv.index("--exec") + 1], "omarchy-shell")
 
 
 class PathSecurityTests(unittest.TestCase):

@@ -10,7 +10,10 @@ readsb / ADS-B Exchange v2 JSON used by [globe.adsbexchange.com](https://globe.a
 - [The OpenSky Network](https://opensky-network.org/) as a last-resort fallback
 
 ADS-B Exchange's own REST gateway is keyed and is not called. This project
-does not scrape the globe site.
+does not scrape the globe site and does not embed it. A listed plane, the TUI
+`o` key, or a notification for one plane opens
+`https://globe.adsbexchange.com/?icao={hex}` in the browser. The only identifier
+in that URL is the aircraft's Mode S hex.
 
 Please treat the feeds gently (this watcher polls about once every 30 seconds)
 and consider running a receiver if you use the data regularly.

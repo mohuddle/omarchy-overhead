@@ -55,6 +55,7 @@ overhead tui
 | `space` | start / stop watching |
 | `1` / `5` / `0` | toggle 1 / 5 / 10 mile rings |
 | `n` | alerts on / off |
+| `o` | open the nearest plane on the ADS-B Exchange globe |
 | `r` | fetch now |
 | `c` | clear stored location |
 | `q` | quit |
@@ -65,7 +66,7 @@ The first run stays idle until you set a ZIP, city, or coordinates.
 
 Left click the plane: ZIP/city field, nearby traffic, ring toggles, Watch / Turn alerts off / TUI. While alerts are on, that button uses the same selected color as an enabled distance ring. The words are the next press. The Device button appears only when GeoClue is already on the machine. Right click toggles watching. The icon uses the theme accent while something is inside 1 mile.
 
-Clicking a notification opens the panel.
+A row in the list opens that aircraft in the browser at `https://globe.adsbexchange.com/?icao={hex}`. `{hex}` is the Mode S address in lowercase, as in `https://globe.adsbexchange.com/?icao=acdfe5`. A notification for one plane opens the same page. A grouped notification names the closest plane and opens this panel, because that toast is not one aircraft. The globe is opened in the browser. The plugin does not embed it.
 
 ## CLI
 
@@ -89,7 +90,7 @@ overhead notify on
 ~/.local/state/omarchy/overhead/status.json
 ```
 
-Grounded aircraft, and anything below 500 ft, are ignored for toasts so a nearby airport does not spam you. The list still shows them. Distances are statute miles, with the direction from your place: N, NE, E, SE, S, SW, W, or NW. A row looks like `4.7 mi NE  UAL2373  B39M  4,200 ft`. The watcher polls about every 30 seconds. A saved 12-second interval, the previous default, moves to 30. Any other saved interval stays. At most one notification is sent per poll, and not more often than every 8 seconds. A toast reads `LXJ328 (E545) is SE, 4.8 mi away, 17,425 ft`. The compass point comes before the distance.
+Grounded aircraft, and anything below 500 ft, are ignored for toasts so a nearby airport does not spam you. The list still shows them, including altitude `ground`. Selecting a row, or pressing `o` in the TUI, opens that plane on the globe. Distances are statute miles, with the direction from your place: N, NE, E, SE, S, SW, W, or NW. A row looks like `4.7 mi NE  UAL2373  B39M  4,200 ft`. The watcher polls about every 30 seconds. A saved 12-second interval, the previous default, moves to 30. Any other saved interval stays. At most one notification is sent per poll, and not more often than every 8 seconds. A toast reads `LXJ328 (E545) is SE, 4.8 mi away, 17,425 ft`. The compass point comes before the distance.
 
 ## Optional device location
 

@@ -6,6 +6,7 @@ from typing import Any
 
 from . import client
 from .geo import compass_point, format_alt, format_coords, format_miles
+from .notify import open_globe
 from .protocol import RINGS
 
 
@@ -148,6 +149,13 @@ def _loop(stdscr: curses.window, state: TuiState) -> None:
             _kick(state, "notify", enabled=not bool(status.get("notify")))
         elif key in (ord("r"), ord("R")):
             _kick(state, "poll")
+        elif key in (ord("o"), ord("O")):
+            aircraft = list(status.get("aircraft") or [])
+            hex_id = aircraft[0].get("hex") if aircraft else ""
+            if open_globe(hex_id):
+                state.note("Opening the nearest plane on the globe.")
+            else:
+                state.note("No globe link for the nearest plane.")
         elif key in (ord("1"), ord("5"), ord("0")):
             ring = 10 if key == ord("0") else int(chr(key))
             current = [int(item) for item in (status.get("rings") or list(RINGS))]
@@ -249,9 +257,9 @@ def _draw(
         cols,
         curses.color_pair(3),
     )
-    help_line = "space watch   m ZIP/city   1/5/0 rings   n alerts   r refresh   q quit"
+    help_line = "space watch   m ZIP/city   1/5/0 rings   n alerts   o globe   r refresh   q quit"
     if status.get("can_locate"):
-        help_line = "space watch   m ZIP/city   a device location   1/5/0 rings   n alerts   r refresh   q quit"
+        help_line = "space watch   m ZIP/city   a device location   1/5/0 rings   n alerts   o globe   r refresh   q quit"
     _put(stdscr, 2, help_line, cols, curses.color_pair(3))
     if mode == "prompt":
         _put(stdscr, 3, "ZIP, city, or coordinates: " + prompt, cols, curses.color_pair(1) | curses.A_BOLD)
